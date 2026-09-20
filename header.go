@@ -132,7 +132,7 @@ line:
 			// A space preceding the first colon in a header line is no longer handled
 			// automatically due to CVE-2019-16276 which takes advantage of this
 			// particular violation of RFC-7230 to exploit HTTP/1.1
-			if bytes.Contains(s[:firstColon], []byte{' ', ':'}) {
+			if bytes.Contains(s[:firstColon+1], []byte{' ', ':'}) {
 				s = bytes.Replace(s, []byte{' ', ':'}, []byte{':'}, 1)
 				firstColon = bytes.IndexByte(s, ':')
 			}
@@ -140,7 +140,7 @@ line:
 			// Behavior change in net/textproto package in Golang 1.20: invalid characters
 			// in header keys are no longer allowed; https://github.com/golang/go/issues/53188
 			for _, c := range s[:firstColon] {
-				if c != ' ' && c != '\t' && !inttp.ValidEmailHeaderFieldByte(c) {
+				if c != ' ' && !inttp.ValidEmailHeaderFieldByte(c) {
 					p.AddError(
 						ErrorMalformedHeader, "Header name %q contains invalid character %q", s, c)
 					continue line
@@ -158,7 +158,7 @@ line:
 			firstHeader = false
 		} else {
 			// No colon: potential non-indented continuation
-			if len(s) >= 0 {
+			if len(s) > 0 {
 				// Attempt to detect and repair a non-indented continuation of previous line
 				buf.WriteByte(' ')
 				buf.Write(s)
